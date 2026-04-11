@@ -1,9 +1,0 @@
-# PeerForge Python Service Dependencies
-# Navigate to /python-service and run `pip install -r requirements.txt`
-
-Flask==2.0.1
-Werkzeug==2.0.1
-
-# Optional additions for Phase 3 (Actual OCR ID Verification)
-# pytesseract==0.3.8
-# Pillow==8.2.0
