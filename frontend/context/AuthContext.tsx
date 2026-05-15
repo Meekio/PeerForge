@@ -44,62 +44,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = async (email: string, password: string) => {
-    try {
-      const response = await api.login(email, password);
-      const mockUser: User = {
-        id: response.id || '1',
-        email,
-        verified: response.verified || false,
-        profileCompleted: response.profileCompleted || false,
-        token: response.token || 'mock-token',
-      };
-      setUser(mockUser);
-      await AsyncStorage.setItem('user', JSON.stringify(mockUser));
-    } catch (err) {
-      console.error('Login error:', err);
-      // Fallback: allow login with mock data if backend fails
-      const mockUser: User = {
-        id: '1',
-        email,
-        verified: false,
-        profileCompleted: false,
-        token: 'mock-token',
-      };
-      setUser(mockUser);
-      await AsyncStorage.setItem('user', JSON.stringify(mockUser));
+    const response = await api.login(email, password);
+    
+    // Check if login failed
+    if (response.error) {
+      throw new Error(response.error);
     }
+    
+    // Only proceed if we have a valid response
+    if (!response.id) {
+      throw new Error('Invalid credentials');
+    }
+    
+    const userData: User = {
+      id: response.id,
+      email,
+      verified: response.verified || false,
+      profileCompleted: response.profileCompleted || false,
+      token: response.token || 'mock-token',
+    };
+    
+    setUser(userData);
+    await AsyncStorage.setItem('user', JSON.stringify(userData));
   };
 
   const signup = async (email: string, password: string) => {
-    try {
-      const response = await api.signup(email, password);
-      const mockUser: User = {
-        id: response.id || '1',
-        email,
-        verified: false,
-        profileCompleted: false,
-        token: response.token || 'mock-token',
-      };
-      setUser(mockUser);
-      await AsyncStorage.setItem('user', JSON.stringify(mockUser));
-    } catch (err) {
-      console.error('Signup error:', err);
-      // Fallback: allow signup with mock data if backend fails
-      const mockUser: User = {
-        id: '1',
-        email,
-        verified: false,
-        profileCompleted: false,
-        token: 'mock-token',
-      };
-      setUser(mockUser);
-      await AsyncStorage.setItem('user', JSON.stringify(mockUser));
+    const response = await api.signup(email, password);
+    
+    // Check if signup failed
+    if (response.error) {
+      throw new Error(response.error);
     }
+    
+    // Only proceed if we have a valid response
+    if (!response.id) {
+      throw new Error('Signup failed');
+    }
+    
+    const userData: User = {
+      id: response.id,
+      email,
+      verified: false,
+      profileCompleted: false,
+      token: response.token || 'mock-token',
+    };
+    
+    setUser(userData);
+    await AsyncStorage.setItem('user', JSON.stringify(userData));
   };
 
   const logout = async () => {
     setUser(null);
-    await AsyncStorage.removeItem('user');
+    await AsyncStorage.clear(); // Clear all storage
+    console.log('✓ Logged out and cleared storage');
   };
 
   const updateVerification = async (verified: boolean) => {

@@ -1,9 +1,10 @@
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
-const TIMEOUT = 2000; // 2 second timeout
+const TIMEOUT = 10000; // 10 second timeout
+const VERIFY_TIMEOUT = 60000; // 60 second timeout for ID verification (OCR takes time)
 
-const fetchWithTimeout = async (url: string, options: any) => {
+const fetchWithTimeout = async (url: string, options: any, timeout: number = TIMEOUT) => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
     const response = await fetch(url, {
@@ -93,10 +94,11 @@ export const api = {
       console.log('Sending verification request to:', `${API_URL}/verify`);
       console.log('Email:', email);
 
-      const response = await fetch(`${API_URL}/verify`, {
+      // Use longer timeout for OCR processing
+      const response = await fetchWithTimeout(`${API_URL}/verify`, {
         method: 'POST',
         body: formData,
-      });
+      }, VERIFY_TIMEOUT);
       
       console.log('Verify response status:', response.status);
       const data = await response.json();
@@ -133,7 +135,7 @@ export const api = {
       console.log('Name:', profileData.name);
       console.log('Skills:', profileData.skills);
       
-      const response = await fetch(`${API_URL}/profile`, {
+      const response = await fetchWithTimeout(`${API_URL}/profile`, {
         method: 'POST',
         body: formData,
       });
@@ -153,7 +155,9 @@ export const api = {
   async getProfiles(email: string) {
     try {
       console.log('Getting profiles from:', `${API_URL}/discover?email=${email}`);
-      const response = await fetch(`${API_URL}/discover?email=${encodeURIComponent(email)}`);
+      const response = await fetchWithTimeout(`${API_URL}/discover?email=${encodeURIComponent(email)}`, {
+        method: 'GET',
+      });
       if (!response.ok) throw new Error('Failed to fetch profiles');
       return response.json();
     } catch (err) {
@@ -165,7 +169,9 @@ export const api = {
   async getUserProfile(email: string) {
     try {
       console.log('Getting user profile from:', `${API_URL}/profile?email=${email}`);
-      const response = await fetch(`${API_URL}/profile?email=${encodeURIComponent(email)}`);
+      const response = await fetchWithTimeout(`${API_URL}/profile?email=${encodeURIComponent(email)}`, {
+        method: 'GET',
+      });
       if (!response.ok) throw new Error('Failed to fetch user profile');
       return response.json();
     } catch (err) {
@@ -182,7 +188,7 @@ export const api = {
       formData.append('email', email);
 
       console.log('Recording swipe to:', `${API_URL}/swipe`);
-      const response = await fetch(`${API_URL}/swipe`, {
+      const response = await fetchWithTimeout(`${API_URL}/swipe`, {
         method: 'POST',
         body: formData,
       });
@@ -198,7 +204,9 @@ export const api = {
   async getMatches(email: string) {
     try {
       console.log('Getting matches from:', `${API_URL}/matches?email=${email}`);
-      const response = await fetch(`${API_URL}/matches?email=${encodeURIComponent(email)}`);
+      const response = await fetchWithTimeout(`${API_URL}/matches?email=${encodeURIComponent(email)}`, {
+        method: 'GET',
+      });
       if (!response.ok) throw new Error('Failed to fetch matches');
       return response.json();
     } catch (err) {
@@ -210,13 +218,27 @@ export const api = {
   async unmatch(matchId: string, email: string) {
     try {
       console.log('Unmatching from:', `${API_URL}/matches/${matchId}?email=${email}`);
-      const response = await fetch(`${API_URL}/matches/${matchId}?email=${encodeURIComponent(email)}`, {
+      const response = await fetchWithTimeout(`${API_URL}/matches/${matchId}?email=${encodeURIComponent(email)}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Unmatch failed');
       return response.json();
     } catch (err) {
       console.error('Unmatch error:', err);
+      throw err;
+    }
+  },
+
+  async deleteAccount(email: string) {
+    try {
+      console.log('Deleting account:', `${API_URL}/account?email=${email}`);
+      const response = await fetchWithTimeout(`${API_URL}/account?email=${encodeURIComponent(email)}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Account deletion failed');
+      return response.json();
+    } catch (err) {
+      console.error('Delete account error:', err);
       throw err;
     }
   },

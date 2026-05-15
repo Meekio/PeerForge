@@ -104,51 +104,40 @@ export default function VerifyScreen() {
     setStatus('pending');
 
     try {
-      // Auto-verify
-      setStatus('verified');
-      await updateVerification(true);
-      // Don't call updateProfile here - let user complete profile first
-
-      // Send verification email directly to v3
+      const fileToUpload = uploadMode === 'pdf' ? pdfFile : frontId;
       const emailToUse = user?.email || 'user@example.com';
-      console.log('Sending verification email to:', emailToUse);
       
-      try {
-        const formData = new FormData();
-        formData.append('email', emailToUse);
+      console.log('Starting verification...');
+      console.log('Email:', emailToUse);
+      console.log('File:', fileToUpload?.name);
+      
+      // Call the backend /verify endpoint
+      const response = await api.verifyId(fileToUpload!, backId, emailToUse);
+      
+      console.log('Verification response:', response);
+      
+      if (response.verified) {
+        setStatus('verified');
         
-        // Call v3 directly (port 8000)
-        const v3Url = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
-        console.log('Calling v3 email endpoint:', `${v3Url}/send-verification-email`);
+        // Update verification status
+        await updateVerification(true);
         
-        const response = await fetch(`${v3Url}/send-verification-email`, {
-          method: 'POST',
-          body: formData,
-        });
-        
-        console.log('V3 email response status:', response.status);
-        const responseData = await response.json();
-        console.log('V3 email response:', responseData);
-        
-        if (response.ok) {
-          console.log('Verification email sent successfully');
-          Alert.alert('Success', 'Verification email sent to ' + emailToUse);
-        } else {
-          console.log('Failed to send verification email:', responseData);
-          Alert.alert('Info', 'ID verified but email could not be sent');
-        }
-      } catch (emailErr) {
-        console.error('Email send error:', emailErr);
-        Alert.alert('Info', 'ID verified but email could not be sent');
+        // Force navigation to trigger layout re-evaluation
+        setTimeout(() => {
+          // Navigate to a dummy route and back to trigger layout refresh
+          router.replace('/profile-setup');
+        }, 1000);
+      } else {
+        setStatus('rejected');
+        Alert.alert(
+          'Verification Failed', 
+          response.error || 'Could not verify your ID. Please try again with a clearer image.'
+        );
       }
-
-      setTimeout(() => {
-        router.replace('/profile-setup');
-      }, 1500);
-    } catch (err) {
+    } catch (err: any) {
       setStatus('rejected');
       console.error('Verification error:', err);
-      Alert.alert('Error', 'Verification failed. Please try again.');
+      Alert.alert('Error', err.message || 'Verification failed. Please try again.');
     } finally {
       setLoading(false);
     }

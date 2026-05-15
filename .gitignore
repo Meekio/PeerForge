@@ -88,3 +88,8 @@ htmlcov/
 *.tmp
 *.temp
 .cache/
+
+# Documentation (exclude non-README markdown files)
+FIXES_APPLIED.md
+FRESH_START.md
+TESTING_VERIFICATION.md

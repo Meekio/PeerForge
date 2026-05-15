@@ -38,7 +38,16 @@ export default function LoginScreen() {
       }, 500);
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message || 'Login failed. Please try again.');
+      const errorMessage = err.message || 'Login failed. Please try again.';
+      
+      // Provide more helpful error messages
+      if (errorMessage.includes('Invalid credentials')) {
+        setError('Account not found or incorrect password. Please check your credentials or sign up.');
+      } else if (errorMessage.includes('timeout') || errorMessage.includes('offline')) {
+        setError('Cannot connect to server. Please check your connection.');
+      } else {
+        setError(errorMessage);
+      }
       setLoading(false);
     }
   };

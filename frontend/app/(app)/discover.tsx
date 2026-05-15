@@ -61,9 +61,9 @@ const MOCK_PROFILES: Profile[] = [
 
 export default function DiscoverScreen() {
   const { user } = useAuth();
-  const [profiles, setProfiles] = useState(MOCK_PROFILES);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const position = useRef(new Animated.ValueXY()).current;
 
   useEffect(() => {
@@ -80,13 +80,18 @@ export default function DiscoverScreen() {
     setLoading(true);
     try {
       const response = await api.getProfiles(user.email);
+      console.log('Loaded profiles:', response.profiles);
       if (response.profiles && response.profiles.length > 0) {
         setProfiles(response.profiles);
+        setCurrentIndex(0); // Reset to first profile
+      } else {
+        // No profiles available
+        setProfiles([]);
       }
     } catch (err) {
       console.error('Failed to load profiles:', err);
-      // Fall back to mock data
-      setProfiles(MOCK_PROFILES);
+      // Show empty state instead of mock data
+      setProfiles([]);
     } finally {
       setLoading(false);
     }
@@ -94,7 +99,28 @@ export default function DiscoverScreen() {
 
   const handleSwipe = async (direction: 'left' | 'right') => {
     const currentProfile = profiles[currentIndex];
+    const interested = direction === 'right';
     
+    // Record swipe first
+    try {
+      const targetUserId = currentProfile.userId || currentProfile.id;
+      console.log('Swiping on profile:', { targetUserId, name: currentProfile.name, interested });
+      
+      const response = await api.recordSwipe(
+        targetUserId, 
+        interested, 
+        user?.email || ''
+      );
+      console.log('Swipe response:', response);
+      if (response.matched) {
+        console.log('🎉 MATCH!', response.matchedWith);
+        // TODO: Show match animation/modal
+      }
+    } catch (err) {
+      console.error('Failed to record swipe:', err);
+    }
+    
+    // Then animate card away
     Animated.timing(position, {
       toValue: {
         x: direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH,
@@ -102,27 +128,7 @@ export default function DiscoverScreen() {
       },
       duration: 300,
       useNativeDriver: false,
-    }).start(async () => {
-      if (direction === 'right') {
-        console.log('Interested in:', currentProfile.name);
-        try {
-          const response = await api.recordSwipe(currentProfile.userId || currentProfile.id, true, user?.email || '');
-          console.log('Swipe response:', response);
-          if (response.matched) {
-            console.log('🎉 MATCH!', response.matchedWith);
-          }
-        } catch (err) {
-          console.error('Failed to record swipe:', err);
-        }
-      } else {
-        console.log('Skipped:', currentProfile.name);
-        try {
-          await api.recordSwipe(currentProfile.userId || currentProfile.id, false, user?.email || '');
-        } catch (err) {
-          console.error('Failed to record swipe:', err);
-        }
-      }
-      
+    }).start(() => {
       setCurrentIndex(currentIndex + 1);
     });
   };

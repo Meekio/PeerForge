@@ -9,6 +9,7 @@ import {
   ScrollView,
   ActivityIndicator,
   FlatList,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -133,10 +134,50 @@ export default function ProfileSetupScreen() {
     console.log('Name:', name);
     console.log('College:', college);
     console.log('Year:', year);
+    console.log('Skills:', skills);
+    console.log('Interests:', interests);
+    console.log('Availability:', availability);
+    console.log('Looking For:', lookingFor);
+    console.log('LinkedIn:', linkedin);
     
-    if (!name || !college || !year) {
-      console.log('Missing required fields');
-      alert('Please fill in basic information');
+    // Validate required fields (all except bio and github)
+    if (!name.trim()) {
+      Alert.alert('Required Field', 'Please enter your name');
+      return;
+    }
+    
+    if (!college.trim()) {
+      Alert.alert('Required Field', 'Please enter your college');
+      return;
+    }
+    
+    if (!year.trim()) {
+      Alert.alert('Required Field', 'Please enter your year');
+      return;
+    }
+    
+    if (skills.length === 0) {
+      Alert.alert('Required Field', 'Please select at least one skill');
+      return;
+    }
+    
+    if (interests.length === 0) {
+      Alert.alert('Required Field', 'Please select at least one interest');
+      return;
+    }
+    
+    if (availability.length === 0) {
+      Alert.alert('Required Field', 'Please select your availability');
+      return;
+    }
+    
+    if (lookingFor.length === 0) {
+      Alert.alert('Required Field', 'Please select what you\'re looking for');
+      return;
+    }
+    
+    if (!linkedin.trim()) {
+      Alert.alert('Required Field', 'Please enter your LinkedIn profile URL');
       return;
     }
 
@@ -170,11 +211,11 @@ export default function ProfileSetupScreen() {
         router.replace('/(app)/discover');
       } else {
         console.error('Save failed:', response);
-        alert('Failed to save profile: ' + (response.error || 'Unknown error'));
+        Alert.alert('Error', 'Failed to save profile: ' + (response.error || 'Unknown error'));
       }
     } catch (err) {
       console.error('Failed to save profile:', err);
-      alert('Failed to save profile: ' + (err as any).message);
+      Alert.alert('Error', 'Failed to save profile: ' + (err as any).message);
     } finally {
       setLoading(false);
     }
@@ -196,24 +237,24 @@ export default function ProfileSetupScreen() {
 
         {/* Basic Info */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Basic Information</Text>
+          <Text style={styles.sectionTitle}>Basic Information *</Text>
           <TextInput
             style={styles.input}
-            placeholder="Full Name"
+            placeholder="Full Name *"
             placeholderTextColor="#666"
             value={name}
             onChangeText={setName}
           />
           <TextInput
             style={styles.input}
-            placeholder="College"
+            placeholder="College *"
             placeholderTextColor="#666"
             value={college}
             onChangeText={setCollege}
           />
           <TextInput
             style={styles.input}
-            placeholder="Year (1-4)"
+            placeholder="Year (1-4) *"
             placeholderTextColor="#666"
             value={year}
             onChangeText={setYear}
@@ -223,7 +264,7 @@ export default function ProfileSetupScreen() {
 
         {/* Skills */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Skills</Text>
+          <Text style={styles.sectionTitle}>Skills *</Text>
           <View style={styles.tagContainer}>
             {SKILL_SUGGESTIONS.map((skill) => (
               <TouchableOpacity
@@ -286,7 +327,7 @@ export default function ProfileSetupScreen() {
 
         {/* Interests */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Interests</Text>
+          <Text style={styles.sectionTitle}>Interests *</Text>
           <View style={styles.tagContainer}>
             {INTEREST_SUGGESTIONS.map((interest) => (
               <TouchableOpacity
@@ -312,7 +353,7 @@ export default function ProfileSetupScreen() {
 
         {/* Availability */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Availability</Text>
+          <Text style={styles.sectionTitle}>Availability *</Text>
           <View style={styles.tagContainer}>
             {AVAILABILITY_OPTIONS.map((option) => (
               <TouchableOpacity
@@ -338,7 +379,7 @@ export default function ProfileSetupScreen() {
 
         {/* Looking For */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Looking For</Text>
+          <Text style={styles.sectionTitle}>Looking For *</Text>
           <View style={styles.tagContainer}>
             {LOOKING_FOR_OPTIONS.map((option) => (
               <TouchableOpacity
@@ -367,14 +408,14 @@ export default function ProfileSetupScreen() {
           <Text style={styles.sectionTitle}>Social Links</Text>
           <TextInput
             style={styles.input}
-            placeholder="GitHub Profile URL"
+            placeholder="GitHub Profile URL (Optional)"
             placeholderTextColor="#666"
             value={github}
             onChangeText={setGithub}
           />
           <TextInput
             style={styles.input}
-            placeholder="LinkedIn Profile URL"
+            placeholder="LinkedIn Profile URL *"
             placeholderTextColor="#666"
             value={linkedin}
             onChangeText={setLinkedin}
@@ -383,10 +424,10 @@ export default function ProfileSetupScreen() {
 
         {/* Bio */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Bio</Text>
+          <Text style={styles.sectionTitle}>Bio (Optional)</Text>
           <TextInput
             style={[styles.input, styles.bioInput]}
-            placeholder="Tell us about yourself..."
+            placeholder="Tell us about yourself... (Optional)"
             placeholderTextColor="#666"
             value={bio}
             onChangeText={setBio}

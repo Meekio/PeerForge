@@ -115,12 +115,55 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const handleEditProfile = () => {
-    router.push('/profile-setup');
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone. All your data including profile, matches, and swipes will be permanently deleted.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (!user?.email) {
+                Alert.alert('Error', 'No user email found');
+                return;
+              }
+
+              console.log('Deleting account for:', user.email);
+              const response = await api.deleteAccount(user.email);
+              
+              if (response.success) {
+                console.log('Account deleted successfully');
+                Alert.alert(
+                  'Account Deleted',
+                  'Your account has been permanently deleted.',
+                  [
+                    {
+                      text: 'OK',
+                      onPress: async () => {
+                        await logout();
+                        router.replace('/(auth)/login');
+                      },
+                    },
+                  ]
+                );
+              } else {
+                Alert.alert('Error', response.error || 'Failed to delete account');
+              }
+            } catch (err: any) {
+              console.error('Delete account error:', err);
+              Alert.alert('Error', err.message || 'Failed to delete account');
+            }
+          },
+        },
+      ]
+    );
   };
 
-  const handleReVerify = () => {
-    router.push('/verify');
+  const handleEditProfile = () => {
+    router.push('/profile-setup');
   };
 
   return (
@@ -226,14 +269,6 @@ export default function ProfileScreen() {
         <View style={styles.actions}>
           <TouchableOpacity
             style={styles.secondaryButton}
-            onPress={handleReVerify}
-          >
-            <Ionicons name="refresh" size={18} color="#6366f1" />
-            <Text style={styles.secondaryButtonText}>Re-verify ID</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
             onPress={handleEditProfile}
           >
             <Ionicons name="pencil" size={18} color="#6366f1" />
@@ -247,6 +282,16 @@ export default function ProfileScreen() {
             <Ionicons name="log-out" size={18} color="#ef4444" />
             <Text style={[styles.secondaryButtonText, styles.dangerButtonText]}>
               Logout
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.secondaryButton, styles.deleteButton]}
+            onPress={handleDeleteAccount}
+          >
+            <Ionicons name="trash" size={18} color="#dc2626" />
+            <Text style={[styles.secondaryButtonText, styles.deleteButtonText]}>
+              Delete Account
             </Text>
           </TouchableOpacity>
         </View>
@@ -430,6 +475,13 @@ const styles = StyleSheet.create({
   },
   dangerButtonText: {
     color: '#ef4444',
+  },
+  deleteButton: {
+    borderColor: '#dc2626',
+    backgroundColor: '#1a0a0a',
+  },
+  deleteButtonText: {
+    color: '#dc2626',
   },
   spacer: {
     height: 20,

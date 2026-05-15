@@ -62,16 +62,22 @@ export default function HomeScreen() {
 
         {/* Quick Stats */}
         <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
+          <TouchableOpacity 
+            style={styles.statCard}
+            onPress={() => router.push('/(app)/discover')}
+          >
             <Ionicons name="flame" size={24} color="#6366f1" />
             <Text style={styles.statLabel}>Discover</Text>
             <Text style={styles.statValue}>Find teammates</Text>
-          </View>
-          <View style={styles.statCard}>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.statCard}
+            onPress={() => router.push('/(app)/matches')}
+          >
             <Ionicons name="heart" size={24} color="#ef4444" />
             <Text style={styles.statLabel}>Matches</Text>
             <Text style={styles.statValue}>Your connections</Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Quick Actions */}
@@ -80,37 +86,9 @@ export default function HomeScreen() {
           
           <TouchableOpacity
             style={styles.actionCard}
-            onPress={() => router.push('/(app)/discover')}
-          >
-            <View style={styles.actionIcon}>
-              <Ionicons name="flame" size={28} color="#6366f1" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Start Discovering</Text>
-              <Text style={styles.actionSubtitle}>Swipe to find your perfect teammate</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
-            onPress={() => router.push('/(app)/matches')}
-          >
-            <View style={styles.actionIcon}>
-              <Ionicons name="heart" size={28} color="#ef4444" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>View Matches</Text>
-              <Text style={styles.actionSubtitle}>Check your connections</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionCard}
             onPress={() => router.push('/(app)/profile')}
           >
-            <View style={styles.actionIcon}>
+            <View style={[styles.actionIcon, { backgroundColor: '#0a3d2a' }]}>
               <Ionicons name="person" size={28} color="#10b981" />
             </View>
             <View style={styles.actionContent}>
@@ -124,7 +102,7 @@ export default function HomeScreen() {
             style={styles.actionCard}
             onPress={() => router.push('/(app)/hackathons')}
           >
-            <View style={styles.actionIcon}>
+            <View style={[styles.actionIcon, { backgroundColor: '#3d2a0a' }]}>
               <Ionicons name="trophy" size={28} color="#f59e0b" />
             </View>
             <View style={styles.actionContent}>

@@ -12,8 +12,10 @@ sys.path.insert(0, os.path.dirname(__file__))
 # Import database module
 from database import init_db, get_db_connection, is_connected
 
-# Import email service from student_id.v3 module
+# Import email service and verification modules from student_id.v3
 from student_id.v3.email_service import send_email
+from student_id.v3.gemini_ocr import extract_text_with_gemini
+from student_id.v3.validator import validate_id
 
 app = FastAPI()
 
@@ -363,6 +365,70 @@ async def unmatch(matchId: str, email: str):
         print(f"Unmatched: {user_id} <-> {matchId}")
         return {"success": True}
 
+@app.delete("/account")
+async def delete_account(email: str):
+    """Delete user account and all associated data"""
+    print(f"\n=== DELETE ACCOUNT ===")
+    print(f"Email: {email}")
+    
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Get user ID
+            cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+            user = cursor.fetchone()
+            if not user:
+                print(f"❌ User not found: {email}")
+                return {"error": "User not found"}
+            
+            user_id = user["id"]
+            print(f"User ID: {user_id}")
+            
+            # Delete all associated data in order (respecting foreign keys)
+            # 1. Delete matches where user is involved
+            cursor.execute("DELETE FROM matches WHERE userId = ? OR matchedUserId = ?", (user_id, user_id))
+            matches_deleted = cursor.rowcount
+            print(f"✓ Deleted {matches_deleted} matches")
+            
+            # 2. Delete swipes by this user
+            cursor.execute("DELETE FROM swipes WHERE userId = ?", (user_id,))
+            swipes_deleted = cursor.rowcount
+            print(f"✓ Deleted {swipes_deleted} swipes")
+            
+            # 3. Delete swipes on this user
+            cursor.execute("DELETE FROM swipes WHERE targetId = ?", (user_id,))
+            target_swipes_deleted = cursor.rowcount
+            print(f"✓ Deleted {target_swipes_deleted} swipes on user")
+            
+            # 4. Delete profile
+            cursor.execute("DELETE FROM profiles WHERE userId = ?", (user_id,))
+            profile_deleted = cursor.rowcount
+            print(f"✓ Deleted profile")
+            
+            # 5. Delete user account
+            cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+            print(f"✓ Deleted user account")
+            
+            conn.commit()
+            print(f"✓ Account deletion complete for {email}")
+            
+            return {
+                "success": True,
+                "message": "Account deleted successfully",
+                "deleted": {
+                    "matches": matches_deleted,
+                    "swipes": swipes_deleted + target_swipes_deleted,
+                    "profile": profile_deleted > 0,
+                    "user": True
+                }
+            }
+    except Exception as e:
+        print(f"✗ Delete account error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
 # ============ EMAIL VERIFICATION ============
 
 @app.post("/send-verification-email")
@@ -382,6 +448,85 @@ async def send_verification_email(email: str = Form(...)):
     except Exception as e:
         print(f"✗ Exception in send_verification_email: {e}")
         return {"success": False, "error": str(e)}
+
+# ============ STUDENT ID VERIFICATION ============
+
+@app.post("/verify")
+async def verify_student_id(
+    file: UploadFile = File(...),
+    email: str = Form(...)
+):
+    """Verify student ID using Gemini Vision"""
+    print(f"\n=== STUDENT ID VERIFICATION (GEMINI) ===")
+    print(f"Email: {email}")
+    print(f"File: {file.filename}")
+    
+    try:
+        # Save uploaded file
+        file_path = f"sample_ids/{file.filename}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        print(f"✓ File saved to {file_path}")
+        
+        # Extract fields using Gemini Vision
+        print("Running Gemini Vision OCR...")
+        fields = extract_text_with_gemini(file_path)
+        
+        if fields is None:
+            print("✗ Gemini extraction failed")
+            return {
+                "verified": False,
+                "error": "Failed to process ID. Please try again.",
+                "name": "Not Found",
+                "college": "Not Found",
+                "validity_year": None
+            }
+        
+        print(f"✓ Extracted: name={fields['name']}, college={fields['college']}, year={fields['validity_year']}")
+        
+        # Validate ID
+        verified = validate_id(fields['validity_year'])
+        print(f"✓ Validation result: {verified}")
+        
+        # Update user verification status in database
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET verified = ? WHERE email = ?", (verified, email))
+            conn.commit()
+            print(f"✓ Updated user verification status in database")
+        
+        # Send verification email
+        try:
+            send_email(email, verified)
+            print(f"✓ Verification email sent to {email}")
+        except Exception as e:
+            print(f"⚠ Email send failed (non-critical): {e}")
+        
+        # Clean up uploaded file
+        try:
+            os.remove(file_path)
+            print(f"✓ Cleaned up {file_path}")
+        except:
+            pass
+        
+        return {
+            "verified": verified,
+            "name": fields['name'],
+            "college": fields['college'],
+            "validity_year": fields['validity_year']
+        }
+        
+    except Exception as e:
+        print(f"✗ Verification error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "verified": False,
+            "error": str(e),
+            "name": "Not Found",
+            "college": "Not Found",
+            "validity_year": None
+        }
 
 # ============ HEALTH CHECK ============
 

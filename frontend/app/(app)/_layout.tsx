@@ -28,6 +28,15 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
+        name="hackathons"
+        options={{
+          title: 'Hackathons',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="trophy" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="discover"
         options={{
           title: 'Discover',
@@ -52,6 +61,12 @@ export default function AppLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="saved-hackathons"
+        options={{
+          href: null, // Hide from tab bar
         }}
       />
     </Tabs>

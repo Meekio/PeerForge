@@ -157,6 +157,16 @@ export default function HackathonsScreen() {
   if (currentIndex >= hackathons.length) {
     return (
       <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Hackathons</Text>
+          <TouchableOpacity 
+            style={styles.savedBadge}
+            onPress={() => router.push('/(app)/saved-hackathons')}
+          >
+            <Ionicons name="bookmark" size={16} color="#6366f1" />
+            <Text style={styles.savedCount}>{interestedHackathons.length}</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.emptyState}>
           <Ionicons name="checkmark-circle" size={64} color="#6366f1" />
           <Text style={styles.emptyTitle}>All caught up!</Text>
@@ -166,6 +176,13 @@ export default function HackathonsScreen() {
           <Text style={styles.interestedCount}>
             {interestedHackathons.length} hackathons saved
           </Text>
+          <TouchableOpacity
+            style={styles.viewSavedButton}
+            onPress={() => router.push('/(app)/saved-hackathons')}
+          >
+            <Ionicons name="bookmark" size={20} color="#fff" />
+            <Text style={styles.viewSavedButtonText}>View Saved Hackathons</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -489,5 +506,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6366f1',
     marginTop: 8,
+  },
+  viewSavedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#6366f1',
+    borderRadius: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    gap: 8,
+    marginTop: 16,
+  },
+  viewSavedButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
 });

@@ -13,9 +13,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/services/api';
+import { useFocusEffect } from 'expo-router';
 
 interface Match {
   id: string;
+  userId?: string;
   name: string;
   college: string;
   skills: string[];
@@ -46,25 +48,31 @@ const MOCK_MATCHES: Match[] = [
 
 export default function MatchesScreen() {
   const { user } = useAuth();
-  const [matches, setMatches] = useState(MOCK_MATCHES);
-  const [loading, setLoading] = useState(false);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadMatches();
-  }, [user]);
+  // Reload matches whenever the screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadMatches();
+    }, [user?.email])
+  );
 
   const loadMatches = async () => {
     if (!user?.email) return;
     setLoading(true);
     try {
       const response = await api.getMatches(user.email);
+      console.log('Loaded matches:', response.matches);
       if (response.matches) {
         setMatches(response.matches);
+      } else {
+        setMatches([]);
       }
     } catch (err) {
       console.error('Failed to load matches:', err);
-      // Fall back to mock data
-      setMatches(MOCK_MATCHES);
+      // Show empty state instead of mock data
+      setMatches([]);
     } finally {
       setLoading(false);
     }
@@ -76,7 +84,7 @@ export default function MatchesScreen() {
     }
   };
 
-  const handleUnmatch = (matchId: string, matchName: string) => {
+  const handleUnmatch = (match: Match, matchName: string) => {
     Alert.alert(
       'Unmatch',
       `Are you sure you want to unmatch with ${matchName}?`,
@@ -86,9 +94,16 @@ export default function MatchesScreen() {
           text: 'Unmatch',
           onPress: async () => {
             try {
-              await api.unmatch(matchId, user?.email || '');
-              setMatches(matches.filter((m) => m.id !== matchId));
+              const matchUserId = match.userId || match.id;
+              console.log('Unmatching with:', { matchUserId, name: matchName });
+              
+              await api.unmatch(matchUserId, user?.email || '');
+              
+              // Remove from local state
+              setMatches(matches.filter((m) => (m.userId || m.id) !== matchUserId));
+              console.log('Unmatch successful');
             } catch (err) {
+              console.error('Unmatch error:', err);
               Alert.alert('Error', 'Failed to unmatch');
             }
           },
@@ -107,7 +122,7 @@ export default function MatchesScreen() {
           <Text style={styles.matchedAt}>Matched {item.matchedAt}</Text>
         </View>
         <TouchableOpacity
-          onPress={() => handleUnmatch(item.id, item.name)}
+          onPress={() => handleUnmatch(item, item.name)}
           style={styles.unmatchButton}
         >
           <Ionicons name="close-circle" size={24} color="#ef4444" />
