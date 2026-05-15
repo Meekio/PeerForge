@@ -153,6 +153,13 @@ Manages user authentication state and persistence using AsyncStorage. Provides:
 
 ## Styling
 
+- Dark theme — #0f0f0f background, #1a1a1a cards
+- Primary color — #6366f1 (indigo)
+- Success color — #10b981 (green)
+- Error color — #ef4444 (red)
+- Rounded corners — 12-16px border radius
+- Soft shadows — Subtle elevation effects
+
 - **Dark theme** — `#0f0f0f` background, `#1a1a1a` cards
 - **Primary color** — `#6366f1` (indigo)
 - **Success color** — `#10b981` (green)
