@@ -242,4 +242,135 @@ export const api = {
       throw err;
     }
   },
+
+  // ============ TEAM MANAGEMENT ============
+
+  async createTeam(name: string, description: string, purpose: string, email: string) {
+    try {
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('purpose', purpose);
+      formData.append('email', email);
+
+      console.log('Creating team:', `${API_URL}/teams`);
+      const response = await fetchWithTimeout(`${API_URL}/teams`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Team creation failed');
+      return response.json();
+    } catch (err) {
+      console.error('Create team error:', err);
+      throw err;
+    }
+  },
+
+  async getUserTeams(email: string) {
+    try {
+      console.log('Getting user teams from:', `${API_URL}/teams?email=${email}`);
+      const response = await fetchWithTimeout(`${API_URL}/teams?email=${encodeURIComponent(email)}`, {
+        method: 'GET',
+      });
+      if (!response.ok) throw new Error('Failed to fetch teams');
+      return response.json();
+    } catch (err) {
+      console.error('Get teams error:', err);
+      throw err;
+    }
+  },
+
+  async getTeamDetails(teamId: string, email: string) {
+    try {
+      console.log('Getting team details from:', `${API_URL}/teams/${teamId}?email=${email}`);
+      const response = await fetchWithTimeout(`${API_URL}/teams/${teamId}?email=${encodeURIComponent(email)}`, {
+        method: 'GET',
+      });
+      if (!response.ok) throw new Error('Failed to fetch team details');
+      return response.json();
+    } catch (err) {
+      console.error('Get team details error:', err);
+      throw err;
+    }
+  },
+
+  async joinTeam(inviteCode: string, email: string) {
+    try {
+      const formData = new FormData();
+      formData.append('inviteCode', inviteCode);
+      formData.append('email', email);
+
+      console.log('Joining team:', `${API_URL}/teams/join`);
+      const response = await fetchWithTimeout(`${API_URL}/teams/join`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to join team');
+      }
+      return response.json();
+    } catch (err) {
+      console.error('Join team error:', err);
+      throw err;
+    }
+  },
+
+  async leaveTeam(teamId: string, email: string) {
+    try {
+      const formData = new FormData();
+      formData.append('email', email);
+
+      console.log('Leaving team:', `${API_URL}/teams/${teamId}/leave`);
+      const response = await fetchWithTimeout(`${API_URL}/teams/${teamId}/leave`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to leave team');
+      }
+      return response.json();
+    } catch (err) {
+      console.error('Leave team error:', err);
+      throw err;
+    }
+  },
+
+  async removeTeamMember(teamId: string, userId: string, email: string) {
+    try {
+      console.log('Removing team member:', `${API_URL}/teams/${teamId}/members/${userId}?email=${email}`);
+      const response = await fetchWithTimeout(`${API_URL}/teams/${teamId}/members/${userId}?email=${encodeURIComponent(email)}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to remove member');
+      }
+      return response.json();
+    } catch (err) {
+      console.error('Remove member error:', err);
+      throw err;
+    }
+  },
+
+  async deleteTeam(teamId: string, email: string) {
+    try {
+      console.log('Deleting team:', `${API_URL}/teams/${teamId}?email=${email}`);
+      const response = await fetchWithTimeout(`${API_URL}/teams/${teamId}?email=${encodeURIComponent(email)}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete team');
+      }
+      return response.json();
+    } catch (err) {
+      console.error('Delete team error:', err);
+      throw err;
+    }
+  },
 };

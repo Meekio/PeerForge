@@ -86,6 +86,20 @@ export default function HomeScreen() {
           
           <TouchableOpacity
             style={styles.actionCard}
+            onPress={() => router.push('/(app)/teams')}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: '#1e1b4b' }]}>
+              <Ionicons name="people" size={28} color="#6366f1" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>My Teams</Text>
+              <Text style={styles.actionSubtitle}>Manage your teams & collaborate</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#666" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionCard}
             onPress={() => router.push('/(app)/profile')}
           >
             <View style={[styles.actionIcon, { backgroundColor: '#0a3d2a' }]}>

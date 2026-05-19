@@ -71,6 +71,47 @@ def init_db():
         )
     """)
     
+    # Teams table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS teams (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            purpose TEXT,
+            createdBy TEXT NOT NULL,
+            createdAt TEXT,
+            FOREIGN KEY (createdBy) REFERENCES users(id)
+        )
+    """)
+    
+    # Team members table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS team_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            teamId TEXT NOT NULL,
+            userId TEXT NOT NULL,
+            role TEXT DEFAULT 'member',
+            joinedAt TEXT,
+            FOREIGN KEY (teamId) REFERENCES teams(id),
+            FOREIGN KEY (userId) REFERENCES users(id),
+            UNIQUE(teamId, userId)
+        )
+    """)
+    
+    # Team invites table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS team_invites (
+            id TEXT PRIMARY KEY,
+            teamId TEXT NOT NULL,
+            invitedBy TEXT NOT NULL,
+            inviteCode TEXT UNIQUE NOT NULL,
+            expiresAt TEXT,
+            createdAt TEXT,
+            FOREIGN KEY (teamId) REFERENCES teams(id),
+            FOREIGN KEY (invitedBy) REFERENCES users(id)
+        )
+    """)
+    
     conn.commit()
     conn.close()
     print("✓ Connected to SQLite")
